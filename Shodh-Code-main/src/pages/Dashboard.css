@@ -5,7 +5,7 @@
 
 .stat-card {
   position: relative;
-  overflow: relative;
+  overflow: hidden;
 }
 
 .stat-icon {
