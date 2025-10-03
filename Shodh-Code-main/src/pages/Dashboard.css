@@ -19,7 +19,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #0d1117;
   font-size: 1.125rem;
 }
 
@@ -93,7 +93,7 @@
   padding: 1rem;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
-  transition: all 0.2s ease-in-out;
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
 }
 
 .problem-card:hover {
@@ -127,9 +127,10 @@
 .problem-platform {
   font-size: 0.75rem;
   color: var(--text-muted);
-  background-color: var(--bg-secondary);
+  background-color: rgba(255, 255, 255, 0.03);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
+  border: 1px solid var(--border-color);
 }
 
 .problem-status {
@@ -158,4 +159,34 @@
   .chart-container {
     height: 250px;
   }
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.loading-state p,
+.error-state p {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 } 

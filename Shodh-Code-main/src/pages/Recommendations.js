@@ -1,79 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiTrendingUp, FiStar, FiClock, FiTarget } from 'react-icons/fi';
+import api from '../services/api';
 import './Recommendations.css';
 
 const Recommendations = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
+  const [recommendations, setRecommendations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const recommendations = [
-    {
-      id: 1,
-      title: "3Sum",
-      platform: "LeetCode",
-      difficulty: "Medium",
-      similarity: 0.92,
-      reason: "Similar to Two Sum - extends to 3 elements",
-      tags: ["Array", "Two Pointers", "Sort"],
-      estimatedTime: "30-45 min",
-      priority: "high"
-    },
-    {
-      id: 2,
-      title: "Valid Anagram",
-      platform: "LeetCode",
-      difficulty: "Easy",
-      similarity: 0.85,
-      reason: "String manipulation like Valid Parentheses",
-      tags: ["String", "Hash Table"],
-      estimatedTime: "15-20 min",
-      priority: "medium"
-    },
-    {
-      id: 3,
-      title: "Maximum Subarray",
-      platform: "LeetCode",
-      difficulty: "Medium",
-      similarity: 0.78,
-      reason: "Dynamic programming - builds on array concepts",
-      tags: ["Array", "Dynamic Programming"],
-      estimatedTime: "25-35 min",
-      priority: "high"
-    },
-    {
-      id: 4,
-      title: "Binary Tree Level Order Traversal",
-      platform: "LeetCode",
-      difficulty: "Medium",
-      similarity: 0.75,
-      reason: "Tree traversal - next step after inorder",
-      tags: ["Tree", "Breadth-First Search"],
-      estimatedTime: "30-40 min",
-      priority: "medium"
-    },
-    {
-      id: 5,
-      title: "Merge Sorted Array",
-      platform: "LeetCode",
-      difficulty: "Easy",
-      similarity: 0.72,
-      reason: "Array manipulation - similar to merge lists",
-      tags: ["Array", "Two Pointers"],
-      estimatedTime: "20-25 min",
-      priority: "low"
-    },
-    {
-      id: 6,
-      title: "Climbing Stairs",
-      platform: "LeetCode",
-      difficulty: "Easy",
-      similarity: 0.68,
-      reason: "Dynamic programming introduction",
-      tags: ["Dynamic Programming", "Math"],
-      estimatedTime: "15-25 min",
-      priority: "medium"
+  useEffect(() => {
+    fetchRecommendations();
+  }, []);
+
+  const fetchRecommendations = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getRecommendations();
+      
+      const recommendationsData = response.items.map((item, index) => ({
+        id: item._id,
+        title: item.title,
+        platform: item.platform,
+        difficulty: item.difficulty,
+        similarity: Math.random() * 0.3 + 0.7, // Mock similarity score
+        reason: `Recommended based on your ${response.tagsUsed[0] || 'coding'} practice`,
+        tags: item.tags,
+        estimatedTime: `${Math.floor(Math.random() * 30) + 15}-${Math.floor(Math.random() * 30) + 30} min`,
+        priority: index < 2 ? 'high' : index < 4 ? 'medium' : 'low'
+      }));
+      
+      setRecommendations(recommendationsData);
+    } catch (err) {
+      console.error('Failed to fetch recommendations:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const categories = [
     { id: 'all', name: 'All Recommendations' },
@@ -109,6 +74,38 @@ const Recommendations = () => {
     if (similarity >= 0.8) return 'var(--warning-color)';
     return 'var(--text-muted)';
   };
+
+  if (loading) {
+    return (
+      <div className="recommendations-page">
+        <div className="page-header">
+          <h1 className="page-title">AI Recommendations</h1>
+          <p className="page-subtitle">Smart problem suggestions based on your learning pattern</p>
+        </div>
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Loading recommendations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="recommendations-page">
+        <div className="page-header">
+          <h1 className="page-title">AI Recommendations</h1>
+          <p className="page-subtitle">Smart problem suggestions based on your learning pattern</p>
+        </div>
+        <div className="error-state">
+          <p>Error loading recommendations: {error}</p>
+          <button onClick={fetchRecommendations} className="btn btn-primary">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="recommendations-page">

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiSave, FiX, FiPlus } from 'react-icons/fi';
-import toast from 'react-hot-toast';
+import api from '../services/api';
 import './AddProblem.css';
 
 const AddProblem = () => {
@@ -18,6 +18,8 @@ const AddProblem = () => {
   });
 
   const [newTag, setNewTag] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const platforms = ['LeetCode', 'Codeforces', 'GeeksforGeeks', 'HackerRank', 'AtCoder'];
   const difficulties = ['Easy', 'Medium', 'Hard'];
@@ -63,24 +65,37 @@ const AddProblem = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     
     if (!formData.title.trim()) {
-      toast.error('Problem title is required');
+      setError('Problem title is required');
       return;
     }
 
-    // Here you would typically save to backend
-    const newProblem = {
-      id: Date.now(),
-      ...formData,
-      date: new Date().toISOString().split('T')[0]
-    };
+    try {
+      setLoading(true);
+      
+      // Generate a unique problemId based on title and platform
+      const problemId = `${formData.platform.toLowerCase()}-${formData.title.toLowerCase().replace(/\s+/g, '-')}`;
+      
+      await api.addSolvedProblem({
+        problemId,
+        title: formData.title,
+        tags: formData.tags,
+        difficulty: formData.difficulty,
+        platform: formData.platform,
+        dateSolved: new Date().toISOString()
+      });
 
-    console.log('New problem:', newProblem);
-    toast.success('Problem added successfully!');
-    navigate('/problems');
+      navigate('/problems');
+    } catch (err) {
+      console.error('Failed to add problem:', err);
+      setError(err.message || 'Failed to add problem');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {
@@ -95,6 +110,11 @@ const AddProblem = () => {
       </div>
 
       <div className="form-container">
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="problem-form">
           <div className="form-section">
             <h3>Basic Information</h3>
@@ -269,9 +289,9 @@ const AddProblem = () => {
               <FiX />
               Cancel
             </button>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary" disabled={loading}>
               <FiSave />
-              Save Problem
+              {loading ? 'Saving...' : 'Save Problem'}
             </button>
           </div>
         </form>

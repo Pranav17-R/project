@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiSearch, FiFilter, FiExternalLink, FiEdit, FiTrash2 } from 'react-icons/fi';
+import api from '../services/api';
 import './Problems.css';
 
 const Problems = () => {
@@ -7,69 +8,41 @@ const Problems = () => {
   const [selectedDifficulty, setSelectedDifficulty] = useState('all');
   const [selectedPlatform, setSelectedPlatform] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [problems, setProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [problems, setProblems] = useState([
-    {
-      id: 1,
-      title: "Two Sum",
-      platform: "LeetCode",
-      difficulty: "Easy",
-      status: "solved",
-      tags: ["Array", "Hash Table"],
-      date: "2024-01-15",
-      notes: "Used HashMap for O(n) solution"
-    },
-    {
-      id: 2,
-      title: "Valid Parentheses",
-      platform: "LeetCode",
-      difficulty: "Easy",
-      status: "solved",
-      tags: ["Stack", "String"],
-      date: "2024-01-14",
-      notes: "Stack-based solution"
-    },
-    {
-      id: 3,
-      title: "Maximum Subarray",
-      platform: "LeetCode",
-      difficulty: "Medium",
-      status: "attempted",
-      tags: ["Array", "Dynamic Programming"],
-      date: "2024-01-13",
-      notes: "Kadane's algorithm"
-    },
-    {
-      id: 4,
-      title: "Binary Tree Inorder Traversal",
-      platform: "LeetCode",
-      difficulty: "Medium",
-      status: "solved",
-      tags: ["Tree", "Stack"],
-      date: "2024-01-12",
-      notes: "Iterative solution with stack"
-    },
-    {
-      id: 5,
-      title: "Merge Two Sorted Lists",
-      platform: "LeetCode",
-      difficulty: "Easy",
-      status: "solved",
-      tags: ["Linked List"],
-      date: "2024-01-11",
-      notes: "Simple merge algorithm"
-    },
-    {
-      id: 6,
-      title: "Climbing Stairs",
-      platform: "LeetCode",
-      difficulty: "Easy",
-      status: "solved",
-      tags: ["Dynamic Programming"],
-      date: "2024-01-10",
-      notes: "Fibonacci sequence pattern"
+  useEffect(() => {
+    fetchProblems();
+  }, []);
+
+  const fetchProblems = async () => {
+    try {
+      setLoading(true);
+      const response = await api.getSolvedProblems({
+        limit: 100,
+        page: 1
+      });
+      
+      const problemsData = response.items.map(item => ({
+        id: item._id,
+        title: item.problem.title,
+        platform: item.problem.platform,
+        difficulty: item.problem.difficulty,
+        status: "solved",
+        tags: item.problem.tags,
+        date: new Date(item.solvedAt).toISOString().split('T')[0],
+        notes: "Solved problem"
+      }));
+      
+      setProblems(problemsData);
+    } catch (err) {
+      console.error('Failed to fetch problems:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const filteredProblems = problems.filter(problem => {
     const matchesSearch = problem.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -84,6 +57,38 @@ const Problems = () => {
   const handleDeleteProblem = (id) => {
     setProblems(problems.filter(problem => problem.id !== id));
   };
+
+  if (loading) {
+    return (
+      <div className="problems-page">
+        <div className="page-header">
+          <h1 className="page-title">Problems</h1>
+          <p className="page-subtitle">Manage and track your coding problems</p>
+        </div>
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Loading problems...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="problems-page">
+        <div className="page-header">
+          <h1 className="page-title">Problems</h1>
+          <p className="page-subtitle">Manage and track your coding problems</p>
+        </div>
+        <div className="error-state">
+          <p>Error loading problems: {error}</p>
+          <button onClick={fetchProblems} className="btn btn-primary">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="problems-page">

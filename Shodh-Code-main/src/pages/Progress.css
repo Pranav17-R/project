@@ -61,8 +61,8 @@
 
 .timeframe-select:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+  border-color: var(--secondary-color);
+  box-shadow: var(--focus-ring);
 }
 
 .chart-container {
@@ -108,7 +108,7 @@
 .goal-percentage {
   font-size: 0.875rem;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--secondary-color);
 }
 
 .goal-progress {
@@ -186,12 +186,12 @@
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   background: var(--bg-secondary);
-  transition: all 0.2s ease-in-out;
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
 }
 
 .achievement-card.achieved {
   border-color: var(--success-color);
-  background: rgba(16, 185, 129, 0.05);
+  background: rgba(46, 160, 67, 0.1);
 }
 
 .achievement-card:hover {
@@ -251,6 +251,36 @@
   .analytics-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.loading-state p,
+.error-state p {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @media (max-width: 768px) {

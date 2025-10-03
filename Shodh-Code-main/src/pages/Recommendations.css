@@ -48,8 +48,8 @@
 
 .filter-select:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+  border-color: var(--secondary-color);
+  box-shadow: var(--focus-ring);
 }
 
 .recommendations-list {
@@ -65,7 +65,7 @@
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
-  transition: all 0.2s ease-in-out;
+  transition: box-shadow 0.25s ease, transform 0.2s ease;
 }
 
 .recommendation-card:hover {
@@ -96,9 +96,10 @@
 .platform {
   font-size: 0.75rem;
   color: var(--text-muted);
-  background-color: var(--bg-secondary);
+  background-color: rgba(255, 255, 255, 0.03);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
+  border: 1px solid var(--border-color);
 }
 
 .recommendation-score {
@@ -148,11 +149,11 @@
 
 .tag {
   font-size: 0.75rem;
-  color: var(--primary-color);
-  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--secondary-color);
+  background-color: rgba(31, 117, 254, 0.12);
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(31, 117, 254, 0.25);
 }
 
 .recommendation-details {
@@ -247,7 +248,7 @@
   content: "•";
   position: absolute;
   left: 0;
-  color: var(--primary-color);
+  color: var(--secondary-color);
   font-weight: bold;
 }
 
@@ -277,4 +278,34 @@
   .insights-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.loading-state p,
+.error-state p {
+  margin-top: 1rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 } 

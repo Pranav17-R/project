@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiTrendingUp, FiCalendar, FiTarget, FiBarChart } from 'react-icons/fi';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
@@ -13,6 +13,7 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
+import api from '../services/api';
 import './Progress.css';
 
 ChartJS.register(
@@ -29,13 +30,40 @@ ChartJS.register(
 
 const Progress = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('month');
+  const [progressData, setProgressData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const progressData = {
+  useEffect(() => {
+    fetchProgressData();
+  }, [selectedTimeframe]);
+
+  const fetchProgressData = async () => {
+    try {
+      setLoading(true);
+      const [summary, timeline] = await Promise.all([
+        api.getProgressSummary(),
+        api.getProgressTimeline(30)
+      ]);
+
+      setProgressData({
+        summary,
+        timeline: timeline.items
+      });
+    } catch (err) {
+      console.error('Failed to fetch progress data:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const chartData = {
     labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
     datasets: [
       {
         label: 'Problems Solved',
-        data: [8, 12, 15, 18],
+        data: progressData?.timeline?.map((item, index) => item.count) || [8, 12, 15, 18],
         borderColor: 'rgb(59, 130, 246)',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         tension: 0.4,
@@ -48,7 +76,11 @@ const Progress = () => {
     datasets: [
       {
         label: 'Solved',
-        data: [45, 32, 12],
+        data: progressData?.summary?.byDifficulty?.map(item => {
+          const difficulty = item._id.toLowerCase();
+          return difficulty === 'easy' ? item.count : 
+                 difficulty === 'medium' ? item.count : item.count;
+        }) || [45, 32, 12],
         backgroundColor: [
           'rgba(34, 197, 94, 0.8)',
           'rgba(245, 158, 11, 0.8)',
@@ -65,11 +97,11 @@ const Progress = () => {
   };
 
   const topicData = {
-    labels: ['Array', 'String', 'DP', 'Tree', 'Graph', 'Stack', 'Queue'],
+    labels: progressData?.summary?.byTag?.slice(0, 7).map(item => item._id) || ['Array', 'String', 'DP', 'Tree', 'Graph', 'Stack', 'Queue'],
     datasets: [
       {
         label: 'Problems Solved',
-        data: [25, 18, 12, 15, 8, 10, 7],
+        data: progressData?.summary?.byTag?.slice(0, 7).map(item => item.count) || [25, 18, 12, 15, 8, 10, 7],
         backgroundColor: 'rgba(59, 130, 246, 0.8)',
         borderColor: 'rgb(59, 130, 246)',
         borderWidth: 1,
@@ -204,6 +236,38 @@ const Progress = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="progress-page">
+        <div className="page-header">
+          <h1 className="page-title">Progress Analytics</h1>
+          <p className="page-subtitle">Track your learning journey and achievements</p>
+        </div>
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Loading progress data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="progress-page">
+        <div className="page-header">
+          <h1 className="page-title">Progress Analytics</h1>
+          <p className="page-subtitle">Track your learning journey and achievements</p>
+        </div>
+        <div className="error-state">
+          <p>Error loading progress: {error}</p>
+          <button onClick={fetchProgressData} className="btn btn-primary">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="progress-page">
       <div className="page-header">
@@ -217,7 +281,7 @@ const Progress = () => {
             <FiTrendingUp />
           </div>
           <h3>Total Solved</h3>
-          <div className="stat-value">89</div>
+          <div className="stat-value">{progressData?.summary?.total || 0}</div>
           <div className="stat-change">
             +12 this month
           </div>
@@ -274,7 +338,7 @@ const Progress = () => {
             </div>
           </div>
           <div className="chart-container">
-            <Line data={progressData} options={chartOptions} />
+            <Line data={chartData} options={chartOptions} />
           </div>
         </div>
 
