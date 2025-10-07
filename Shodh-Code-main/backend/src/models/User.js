@@ -6,7 +6,11 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    joinedAt: { type: Date, default: Date.now }
+    joinedAt: { type: Date, default: Date.now },
+    weeklyGoal: { type: Number, default: 0, min: 0 },
+    monthlyGoal: { type: Number, default: 0, min: 0 },
+    easyGoal: { type: Number, default: 0, min: 0 },
+    mediumGoal: { type: Number, default: 0, min: 0 }
   },
   { timestamps: true }
 );

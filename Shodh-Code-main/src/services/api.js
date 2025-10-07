@@ -112,6 +112,13 @@ class ApiService {
     });
   }
 
+  async updateProblem(id, problemData) {
+    return this.request(`/problems/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(problemData),
+    });
+  }
+
   // Solved problem endpoints
   async addSolvedProblem(problemData) {
     return this.request('/solved', {

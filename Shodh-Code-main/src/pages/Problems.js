@@ -216,7 +216,19 @@ const Problems = () => {
                   )}
                 </div>
                 <div className="problem-actions">
-                  <button className="action-btn" title="Edit">
+                  <button className="action-btn" title="Edit" onClick={async () => {
+                    const newTitle = prompt('Update title', problem.title);
+                    if (newTitle === null) return;
+                    const newUrl = prompt('Update URL', problem.url || '');
+                    if (newUrl === null) return;
+                    const updated = { title: newTitle.trim(), url: newUrl.trim() };
+                    try {
+                      await api.updateProblem(problem.id, updated);
+                      setProblems(prev => prev.map(p => p.id === problem.id ? { ...p, ...updated } : p));
+                    } catch (err) {
+                      alert(err.message || 'Failed to update problem');
+                    }
+                  }}>
                     <FiEdit />
                   </button>
                   <button className="action-btn" title="Delete" onClick={() => handleDeleteProblem(problem.id)}>

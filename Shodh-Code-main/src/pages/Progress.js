@@ -31,6 +31,11 @@ ChartJS.register(
 const Progress = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('month');
   const [progressData, setProgressData] = useState(null);
+  const [streak, setStreak] = useState(0);
+  const [profile, setProfile] = useState(null);
+  const [weeklyGoal, setWeeklyGoal] = useState(0);
+  const [monthlyGoal, setMonthlyGoal] = useState(0);
+  const [weeklySolved, setWeeklySolved] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -41,15 +46,63 @@ const Progress = () => {
   const fetchProgressData = async () => {
     try {
       setLoading(true);
-      const [summary, timeline] = await Promise.all([
+      const [summary, timeline, me] = await Promise.all([
         api.getProgressSummary(),
-        api.getProgressTimeline(30)
+        api.getProgressTimeline(30),
+        api.getProfile()
       ]);
 
       setProgressData({
         summary,
         timeline: timeline.items
       });
+
+      setProfile(me);
+      setWeeklyGoal(Number(me?.weeklyGoal || 0));
+      setMonthlyGoal(Number(me?.monthlyGoal || 0));
+
+      // Compute current streak: consecutive days up to today with count > 0
+      const countsByDate = new Set(
+        (timeline.items || []).filter(it => it.count > 0).map(it => {
+          const y = it._id.y;
+          const m = String(it._id.m).padStart(2, '0');
+          const d = String(it._id.d).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        })
+      );
+      let s = 0;
+      const today = new Date();
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() - i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const da = String(d.getDate()).padStart(2, '0');
+        const key = `${y}-${m}-${da}`;
+        if (countsByDate.has(key)) {
+          s += 1;
+        } else {
+          break;
+        }
+      }
+      setStreak(s);
+
+      // Compute solved in last 7 days for weekly progress
+      const countsByDateMap = new Map(
+        (timeline.items || []).map(it => {
+          const key = `${it._id.y}-${String(it._id.m).padStart(2, '0')}-${String(it._id.d).padStart(2, '0')}`;
+          return [key, it.count];
+        })
+      );
+      const now = new Date();
+      let weekSum = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        weekSum += countsByDateMap.get(key) || 0;
+      }
+      setWeeklySolved(weekSum);
     } catch (err) {
       console.error('Failed to fetch progress data:', err);
       setError(err.message);
@@ -110,14 +163,16 @@ const Progress = () => {
   };
 
   const platformData = {
-    labels: ['LeetCode', 'Codeforces', 'GeeksforGeeks'],
+    labels: (progressData?.summary?.byPlatform || []).map(p => p._id),
     datasets: [
       {
-        data: [65, 20, 15],
+        data: (progressData?.summary?.byPlatform || []).map(p => p.count),
         backgroundColor: [
           'rgba(59, 130, 246, 0.8)',
           'rgba(16, 185, 129, 0.8)',
           'rgba(245, 158, 11, 0.8)',
+          'rgba(239, 68, 68, 0.8)',
+          'rgba(99, 102, 241, 0.8)'
         ],
         borderWidth: 0,
       },
@@ -212,29 +267,26 @@ const Progress = () => {
     }
   ];
 
-  const goals = [
-    {
-      id: 1,
-      title: "Monthly Goal",
-      target: 50,
-      current: 35,
-      unit: "problems"
-    },
-    {
-      id: 2,
-      title: "Easy Problems",
-      target: 30,
-      current: 25,
-      unit: "solved"
-    },
-    {
-      id: 3,
-      title: "Medium Problems",
-      target: 20,
-      current: 15,
-      unit: "solved"
+  // Real-time counts for easy/medium
+  const easyCount = (progressData?.summary?.byDifficulty || []).find(d => d._id === 'Easy')?.count || 0;
+  const mediumCount = (progressData?.summary?.byDifficulty || []).find(d => d._id === 'Medium')?.count || 0;
+  const handleSaveWeeklyGoal = async () => {
+    try {
+      const updated = await api.updateProfile({ weeklyGoal: Number(weeklyGoal) });
+      setProfile(updated);
+    } catch (err) {
+      alert(err.message || 'Failed to update weekly goal');
     }
-  ];
+  };
+
+  const handleSaveMonthlyGoal = async () => {
+    try {
+      const updated = await api.updateProfile({ monthlyGoal: Number(monthlyGoal) });
+      setProfile(updated);
+    } catch (err) {
+      alert(err.message || 'Failed to update monthly goal');
+    }
+  };
 
   if (loading) {
     return (
@@ -292,7 +344,7 @@ const Progress = () => {
             <FiCalendar />
           </div>
           <h3>Current Streak</h3>
-          <div className="stat-value">7 days</div>
+          <div className="stat-value">{streak} {streak === 1 ? 'day' : 'days'}</div>
           <div className="stat-change">
             Keep it up!
           </div>
@@ -348,29 +400,69 @@ const Progress = () => {
             <p>Track your progress towards your learning goals</p>
           </div>
           <div className="goals-grid">
-            {goals.map((goal) => {
-              const percentage = (goal.current / goal.target) * 100;
-              return (
-                <div key={goal.id} className="goal-card">
-                  <div className="goal-header">
-                    <h3>{goal.title}</h3>
-                    <span className="goal-percentage">{Math.round(percentage)}%</span>
-                  </div>
-                  <div className="goal-progress">
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill"
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                    <div className="goal-stats">
-                      <span>{goal.current}</span>
-                      <span>/ {goal.target} {goal.unit}</span>
-                    </div>
-                  </div>
+            <div className="goal-card">
+              <div className="goal-header">
+                <h3>Weekly Goal</h3>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input type="number" min="0" value={weeklyGoal} onChange={(e) => setWeeklyGoal(Number(e.target.value))} className="timeframe-select" style={{ width: 90 }} />
+                  <button className="btn btn-primary" onClick={handleSaveWeeklyGoal}>Save</button>
                 </div>
-              );
-            })}
+              </div>
+              <div className="goal-progress">
+                <div className="progress-bar">
+                  <div 
+                    className="progress-fill"
+                    style={{ width: `${weeklyGoal ? Math.min(100, Math.round((weeklySolved / weeklyGoal) * 100)) : 0}%` }}
+                  ></div>
+                </div>
+                <div className="goal-stats">
+                  <span>{weeklySolved}</span>
+                  <span>/ {weeklyGoal} problems</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="goal-card">
+              <div className="goal-header">
+                <h3>Monthly Goal</h3>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input type="number" min="0" value={monthlyGoal} onChange={(e) => setMonthlyGoal(Number(e.target.value))} className="timeframe-select" style={{ width: 90 }} />
+                  <button className="btn btn-primary" onClick={handleSaveMonthlyGoal}>Save</button>
+                </div>
+              </div>
+              <div className="goal-progress">
+                <div className="goal-stats">
+                  <span>{progressData?.summary?.total || 0}</span>
+                  <span>/ {monthlyGoal} problems</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="goal-card">
+              <div className="goal-header">
+                <h3>Easy Problems</h3>
+                <span className="goal-percentage">{easyCount}</span>
+              </div>
+              <div className="goal-progress">
+                <div className="goal-stats">
+                  <span>{easyCount}</span>
+                  <span> solved</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="goal-card">
+              <div className="goal-header">
+                <h3>Medium Problems</h3>
+                <span className="goal-percentage">{mediumCount}</span>
+              </div>
+              <div className="goal-progress">
+                <div className="goal-stats">
+                  <span>{mediumCount}</span>
+                  <span> solved</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

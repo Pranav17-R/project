@@ -21,9 +21,16 @@ export async function summary(req, res, next) {
       { $limit: 20 }
     ]);
 
+    const byPlatform = await SolvedProblem.aggregate([
+      { $match: { userId } },
+      { $lookup: { from: 'problems', localField: 'problemId', foreignField: '_id', as: 'problem' } },
+      { $unwind: '$problem' },
+      { $group: { _id: '$problem.platform', count: { $sum: 1 } } }
+    ]);
+
     const total = await SolvedProblem.countDocuments({ userId });
 
-    res.json({ total, byDifficulty, byTag });
+    res.json({ total, byDifficulty, byTag, byPlatform });
   } catch (err) {
     next(err);
   }

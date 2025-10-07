@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
-import { listProblems, createProblem } from '../controllers/problem.controller.js';
+import { listProblems, createProblem, updateProblem } from '../controllers/problem.controller.js';
 import { requireAuth, requireRole } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 
@@ -33,6 +33,20 @@ router.post(
   ],
   validate,
   createProblem
+);
+
+router.put(
+  '/:id',
+  requireAuth,
+  [
+    body('title').optional().isString(),
+    body('tags').optional().isArray(),
+    body('difficulty').optional().isIn(['Easy', 'Medium', 'Hard']),
+    body('platform').optional().isString(),
+    body('url').optional().isString()
+  ],
+  validate,
+  updateProblem
 );
 
 export default router;
