@@ -86,6 +86,7 @@ const AddProblem = () => {
         tags: formData.tags,
         difficulty: formData.difficulty,
         platform: formData.platform,
+        url: formData.url,
         dateSolved: new Date().toISOString()
       });
 

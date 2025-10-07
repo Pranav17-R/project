@@ -21,10 +21,10 @@ export async function listProblems(req, res, next) {
 
 export async function createProblem(req, res, next) {
   try {
-    const { problemId, title, tags = [], difficulty, platform } = req.body;
+    const { problemId, title, tags = [], difficulty, platform, url } = req.body;
     const exists = await Problem.findOne({ problemId });
     if (exists) return res.status(409).json({ message: 'Problem already exists' });
-    const problem = await Problem.create({ problemId, title, tags, difficulty, platform });
+    const problem = await Problem.create({ problemId, title, tags, difficulty, platform, url });
     res.status(201).json(problem);
   } catch (err) {
     next(err);

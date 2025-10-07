@@ -6,7 +6,8 @@ const problemSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     tags: { type: [String], default: [] },
     difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], required: true },
-    platform: { type: String, required: true, trim: true }
+    platform: { type: String, required: true, trim: true },
+    url: { type: String, trim: true }
   },
   { timestamps: true }
 );

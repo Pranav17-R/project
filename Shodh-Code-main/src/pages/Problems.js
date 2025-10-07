@@ -31,6 +31,7 @@ const Problems = () => {
         difficulty: item.problem.difficulty,
         status: "solved",
         tags: item.problem.tags,
+        url: item.problem.url,
         date: new Date(item.solvedAt).toISOString().split('T')[0],
         notes: "Solved problem"
       }));
@@ -54,8 +55,18 @@ const Problems = () => {
     return matchesSearch && matchesDifficulty && matchesPlatform && matchesStatus;
   });
 
-  const handleDeleteProblem = (id) => {
-    setProblems(problems.filter(problem => problem.id !== id));
+  const handleDeleteProblem = async (id) => {
+    // Optimistic UI update
+    const prev = problems;
+    setProblems(prev.filter(problem => problem.id !== id));
+    try {
+      await api.deleteSolvedProblem(id);
+    } catch (err) {
+      console.error('Failed to delete solved problem:', err);
+      // Revert if backend delete failed
+      setProblems(prev);
+      alert(err.message || 'Failed to delete problem');
+    }
   };
 
   if (loading) {
@@ -211,7 +222,15 @@ const Problems = () => {
                   <button className="action-btn" title="Delete" onClick={() => handleDeleteProblem(problem.id)}>
                     <FiTrash2 />
                   </button>
-                  <button className="action-btn" title="View on Platform">
+                  <button className="action-btn" title="View on Platform" onClick={() => {
+                    const link = (problem.url || '').trim();
+                    if (link) {
+                      const safeUrl = link.startsWith('http://') || link.startsWith('https://') ? link : `https://${link}`;
+                      window.open(safeUrl, '_blank', 'noopener,noreferrer');
+                    } else {
+                      alert('No URL available for this problem.');
+                    }
+                  }}>
                     <FiExternalLink />
                   </button>
                 </div>

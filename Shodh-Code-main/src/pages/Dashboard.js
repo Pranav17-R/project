@@ -35,6 +35,8 @@ const Dashboard = () => {
   });
 
   const [recentProblems, setRecentProblems] = useState([]);
+  const [progressData, setProgressData] = useState({ labels: [], datasets: [] });
+  const [difficultyData, setDifficultyData] = useState({ labels: [], datasets: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -66,6 +68,55 @@ const Dashboard = () => {
           date: new Date(item.solvedAt).toISOString().split('T')[0]
         })));
 
+        // Build weekly progress chart from last 7 days
+        const now = new Date();
+        const formatDate = (d) => {
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const da = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${da}`;
+        };
+        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const countsByDate = new Map();
+        timelineData.items.forEach(it => {
+          const dateStr = `${it._id.y}-${String(it._id.m).padStart(2, '0')}-${String(it._id.d).padStart(2, '0')}`;
+          countsByDate.set(dateStr, (countsByDate.get(dateStr) || 0) + it.count);
+        });
+        const last7Dates = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(now);
+          d.setDate(now.getDate() - (6 - i));
+          return d;
+        });
+        const labels = last7Dates.map(d => dayNames[d.getDay()]);
+        const series = last7Dates.map(d => countsByDate.get(formatDate(d)) || 0);
+        setProgressData({
+          labels,
+          datasets: [
+            {
+              label: 'Problems Solved',
+              data: series,
+              borderColor: 'rgb(59, 130, 246)',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+            }
+          ]
+        });
+
+        // Difficulty distribution from summary
+        const diffOrder = ['Easy', 'Medium', 'Hard'];
+        const diffColors = ['rgb(34, 197, 94)', 'rgb(245, 158, 11)', 'rgb(239, 68, 68)'];
+        const counts = diffOrder.map(name => progressSummary.byDifficulty.find(d => d._id === name)?.count || 0);
+        setDifficultyData({
+          labels: diffOrder,
+          datasets: [
+            {
+              data: counts,
+              backgroundColor: diffColors,
+              borderWidth: 0
+            }
+          ]
+        });
+
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
         setError(err.message);
@@ -77,33 +128,7 @@ const Dashboard = () => {
     fetchDashboardData();
   }, []);
 
-  const progressData = {
-    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-    datasets: [
-      {
-        label: 'Problems Solved',
-        data: [3, 5, 2, 8, 4, 6, 3],
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.4,
-      },
-    ],
-  };
-
-  const difficultyData = {
-    labels: ['Easy', 'Medium', 'Hard'],
-    datasets: [
-      {
-        data: [45, 32, 12],
-        backgroundColor: [
-          'rgb(34, 197, 94)',
-          'rgb(245, 158, 11)',
-          'rgb(239, 68, 68)',
-        ],
-        borderWidth: 0,
-      },
-    ],
-  };
+  
 
   const chartOptions = {
     responsive: true,

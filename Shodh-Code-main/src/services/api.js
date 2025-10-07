@@ -34,10 +34,22 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      // Handle 204 No Content or empty bodies gracefully
+      const contentType = response.headers.get('content-type') || '';
+      let data = null;
+      if (response.status !== 204) {
+        if (contentType.includes('application/json')) {
+          const text = await response.text();
+          data = text ? JSON.parse(text) : null;
+        } else {
+          // Fallback for non-JSON responses
+          data = await response.text();
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || 'API request failed');
+        const message = data && typeof data === 'object' && data.message ? data.message : 'API request failed';
+        throw new Error(message);
       }
 
       return data;
@@ -111,6 +123,12 @@ class ApiService {
   async getSolvedProblems(params = {}) {
     const queryString = new URLSearchParams(params).toString();
     return this.request(`/solved${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async deleteSolvedProblem(id) {
+    return this.request(`/solved/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Recommendation endpoints

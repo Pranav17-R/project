@@ -3,10 +3,10 @@ import SolvedProblem from '../models/SolvedProblem.js';
 
 export async function addSolved(req, res, next) {
   try {
-    const { problemId, title, tags = [], dateSolved, difficulty, platform } = req.body;
+    const { problemId, title, tags = [], dateSolved, difficulty, platform, url } = req.body;
     let problem = await Problem.findOne({ problemId });
     if (!problem) {
-      problem = await Problem.create({ problemId, title, tags, difficulty, platform });
+      problem = await Problem.create({ problemId, title, tags, difficulty, platform, url });
     }
     const solved = await SolvedProblem.create({
       userId: req.user.id,
@@ -54,6 +54,17 @@ export async function listSolved(req, res, next) {
     const total = facet[0]?.total?.[0]?.count || 0;
 
     res.json({ items, total, page: Number(page), limit: Number(limit) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteSolved(req, res, next) {
+  try {
+    const { id } = req.params;
+    const deleted = await SolvedProblem.findOneAndDelete({ _id: id, userId: req.user.id });
+    if (!deleted) return res.status(404).json({ message: 'Solved problem not found' });
+    return res.status(204).send();
   } catch (err) {
     next(err);
   }

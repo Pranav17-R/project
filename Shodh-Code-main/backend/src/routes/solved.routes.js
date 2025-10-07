@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body, query } from 'express-validator';
-import { addSolved, listSolved } from '../controllers/solved.controller.js';
+import { addSolved, listSolved, deleteSolved } from '../controllers/solved.controller.js';
 import { requireAuth } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
 
@@ -32,6 +32,12 @@ router.get(
   ],
   validate,
   listSolved
+);
+
+router.delete(
+  '/:id',
+  requireAuth,
+  deleteSolved
 );
 
 export default router;
