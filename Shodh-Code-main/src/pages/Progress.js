@@ -350,27 +350,7 @@ const Progress = () => {
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon">
-            <FiTarget />
-          </div>
-          <h3>Success Rate</h3>
-          <div className="stat-value">78%</div>
-          <div className="stat-change">
-            +5% from last month
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon">
-            <FiBarChart />
-          </div>
-          <h3>Avg. Time</h3>
-          <div className="stat-value">25 min</div>
-          <div className="stat-change">
-            Per problem
-          </div>
-        </div>
+        
       </div>
 
       <div className="progress-content">

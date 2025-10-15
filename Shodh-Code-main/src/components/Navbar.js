@@ -37,10 +37,6 @@ const Navbar = () => {
         </div>
 
         <div className="navbar-actions">
-          <button className="navbar-btn">
-            <FiBell />
-            <span className="notification-badge">3</span>
-          </button>
           <div className="user-menu">
             <button 
               className="navbar-btn"

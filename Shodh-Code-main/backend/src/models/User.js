@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema(
     monthlyGoal: { type: Number, default: 0, min: 0 },
     easyGoal: { type: Number, default: 0, min: 0 },
     mediumGoal: { type: Number, default: 0, min: 0 }
+    ,
+    theme: { type: String, enum: ['light', 'dark'], default: 'light' }
   },
   { timestamps: true }
 );

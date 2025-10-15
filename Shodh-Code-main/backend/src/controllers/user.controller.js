@@ -12,7 +12,7 @@ export async function getProfile(req, res, next) {
 
 export async function updateProfile(req, res, next) {
   try {
-    const { username, email, weeklyGoal, monthlyGoal, easyGoal, mediumGoal } = req.body;
+    const { username, email, weeklyGoal, monthlyGoal, easyGoal, mediumGoal, theme } = req.body;
     const updates = {};
     if (username) updates.username = username;
     if (email) updates.email = email.toLowerCase();
@@ -20,6 +20,7 @@ export async function updateProfile(req, res, next) {
     if (typeof monthlyGoal === 'number' && monthlyGoal >= 0) updates.monthlyGoal = monthlyGoal;
     if (typeof easyGoal === 'number' && easyGoal >= 0) updates.easyGoal = easyGoal;
     if (typeof mediumGoal === 'number' && mediumGoal >= 0) updates.mediumGoal = mediumGoal;
+    if (theme === 'light' || theme === 'dark') updates.theme = theme;
     const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-passwordHash');
     res.json(user);
   } catch (err) {

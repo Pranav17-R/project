@@ -92,6 +92,10 @@ class ApiService {
     });
   }
 
+  async getTheme() {
+    return this.getProfile();
+  }
+
   async changePassword(passwordData) {
     return this.request('/users/me/password', {
       method: 'POST',
